@@ -23,6 +23,7 @@ function writeStored(key, value) {
 let language = languages.find((l) => l.id === readStored('kotoba-language', 'en')) || languages[0];
 let saved = readStored('kotoba-words', []);
 saved = Array.isArray(saved) ? saved.filter((s) => s && words[s.word] && languages.some((l) => l.id === s.lang)).slice(0, 200) : [];
+let removedWord = null;
 let selected = null;
 let predictions = [];
 let stream = null;
@@ -313,9 +314,9 @@ function renderNotebook() {
   $('saved-count').textContent = saved.length;
   const list = $('notebook-list'); list.replaceChildren();
   if (!saved.length) {
-    list.innerHTML = `<div class="notebook-empty">${icon('book')}<h3>最初のことばを見つけよう</h3><p>気になったことばの<br>「ことば帳に入れる」を押してね。</p></div>`; return;
+    list.innerHTML = `<div class="notebook-empty">${icon('book')}<h3>最初のことばを見つけよう</h3><p>気になったことばの<br>「ことば帳に入れる」を押してね。</p></div>`;
   }
-  for (const entry of saved) {
+  for (const [index, entry] of saved.entries()) {
     const row = document.createElement('div'); row.className = 'saved-row';
     const lang = languages.find((l) => l.id === entry.lang);
     const text = document.createElement('div');
@@ -323,13 +324,34 @@ function renderNotebook() {
     const detail = document.createElement('small'); detail.textContent = `${words[entry.word].ja} / ${lang.label}`;
     text.append(name, detail);
     const play = document.createElement('button'); play.className = 'icon-button'; play.innerHTML = icon('sound'); play.ariaLabel = `${name.textContent}の発音を聞く`; play.onclick = () => speak(entry.word, entry.lang);
-    const remove = document.createElement('button'); remove.className = 'icon-button remove-word'; remove.innerHTML = icon('close'); remove.ariaLabel = `${name.textContent}をことば帳から消す`;
+    const remove = document.createElement('button'); remove.className = 'icon-button remove-word'; remove.textContent = '消す'; remove.ariaLabel = `${name.textContent}をことば帳から消す`;
     remove.onclick = () => {
       const next = saved.filter((s) => s !== entry);
       if (!writeStored('kotoba-words', next)) { toast('ことば帳を変更できませんでした。'); return; }
-      saved = next; renderNotebook(); if (selected) saveButton(); toast('ことば帳から消しました');
+      $('toast').hidden = true;
+      removedWord = { entry, index };
+      saved = next; renderNotebook(); if (selected) saveButton();
+      list.querySelector('.undo-word').focus();
     };
     row.append(text, play, remove); list.append(row);
+  }
+  if (removedWord) {
+    const { entry, index } = removedWord;
+    const row = document.createElement('div'); row.className = 'notebook-undo';
+    const message = document.createElement('p'); message.id = 'notebook-undo-message';
+    const name = document.createElement('span'); name.lang = entry.lang; name.textContent = words[entry.word][entry.lang];
+    message.append(name, ' を消しました。');
+    const undo = document.createElement('button'); undo.className = 'button secondary undo-word'; undo.textContent = '元に戻す';
+    undo.setAttribute('aria-describedby', message.id);
+    undo.onclick = () => {
+      const next = saved.slice(); next.splice(index, 0, entry);
+      if (!writeStored('kotoba-words', next)) { toast('ことばを元に戻せませんでした。'); return; }
+      removedWord = null;
+      saved = next; renderNotebook(); if (selected) saveButton();
+      list.children[index].querySelector('button').focus();
+      toast('ことばを元に戻しました');
+    };
+    row.append(message, undo); list.insertBefore(row, list.children[index] || null);
   }
 }
 $('language').onchange = (event) => {
@@ -356,6 +378,7 @@ $('save').onclick = () => {
   saved = next; saveButton(); renderNotebook(); toast('ことば帳に入りました');
 };
 $('open-notebook').onclick = () => { renderNotebook(); $('notebook-dialog').showModal(); };
+$('notebook-dialog').addEventListener('close', () => { removedWord = null; });
 $('open-help').onclick = () => $('help-dialog').showModal();
 document.querySelectorAll('.close-dialog').forEach((button) => { button.onclick = () => button.closest('dialog').close(); });
 document.querySelectorAll('dialog').forEach((dialog) => {

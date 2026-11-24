@@ -126,7 +126,10 @@ dialog::backdrop { background: #182e2673; backdrop-filter: blur(4px); }
 .saved-row strong { display: block; font-size: 24px; font-weight: 500; overflow-wrap: anywhere; }
 .saved-row small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 7px; }
 .saved-row .icon { width: 18px; height: 18px; }
-.remove-word { background: transparent; border: 0; color: #8e9687; }
+.remove-word { background: transparent; border: 0; color: var(--text-muted); font-size: 12px; }
+.notebook-undo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; margin-block: 8px; border-radius: 12px; background: #edf1e7; }
+.notebook-undo p { margin: 0; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+.undo-word { min-height: 44px; flex-shrink: 0; padding: 8px 12px; font-size: 12px; }
 .help-content { font-size: 13px; line-height: 2; }
 .help-content h3 { font-size: 15px; margin: 28px 0 8px; }
 .help-content p { color: var(--text-muted); margin: 8px 0 14px; }
