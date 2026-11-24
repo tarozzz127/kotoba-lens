@@ -328,6 +328,7 @@ function renderNotebook() {
     remove.onclick = () => {
       const next = saved.filter((s) => s !== entry);
       if (!writeStored('kotoba-words', next)) { toast('ことば帳を変更できませんでした。'); return; }
+      $('toast').hidden = true;
       removedWord = { entry, index };
       saved = next; renderNotebook(); if (selected) saveButton();
       list.querySelector('.undo-word').focus();
