@@ -1,9 +1,9 @@
 export const languages = [
-  { id: 'en', label: '英語', native: 'English', voice: 'en-US' },
+  { id: 'en', label: '英語', native: 'English', voice: 'en-US', altVoices: ['en-GB', 'en-AU'] },
   { id: 'ko', label: '韓国語', native: '한국어', voice: 'ko-KR' },
-  { id: 'zh', label: '中国語', native: '中文', voice: 'zh-CN' },
-  { id: 'fr', label: 'フランス語', native: 'Français', voice: 'fr-FR' },
-  { id: 'es', label: 'スペイン語', native: 'Español', voice: 'es-ES' },
+  { id: 'zh', label: '中国語', native: '中文', voice: 'zh-CN', altVoices: ['zh-TW', 'zh-SG'] },
+  { id: 'fr', label: 'フランス語', native: 'Français', voice: 'fr-FR', altVoices: ['fr-CA'] },
+  { id: 'es', label: 'スペイン語', native: 'Español', voice: 'es-ES', altVoices: ['es-MX', 'es-US'] },
   { id: 'de', label: 'ドイツ語', native: 'Deutsch', voice: 'de-DE' },
   { id: 'it', label: 'イタリア語', native: 'Italiano', voice: 'it-IT' },
 ];
