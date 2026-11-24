@@ -30,6 +30,20 @@ test('recognition rejects low confidence and unknown labels, deduplicates and ra
   assert.deepEqual(chooseObjects([]), []);
 });
 
+test('recognized labels can display a different English word without changing the detector key', () => {
+  const labels = ['sports ball', 'tv', 'remote', 'hair drier', 'cell phone'];
+  const recognized = chooseObjects(labels.map((label) => ({ class: label, score: 0.9 })));
+  assert.deepEqual(recognized.map(({ class: label }) => words[label].en),
+    ['ball', 'TV', 'remote control', 'hair dryer', 'cell phone']);
+});
+
+test('translations use natural names for the pictured objects', () => {
+  assert.equal(words['stop sign'].zh, '停车让行标志');
+  assert.equal(words['potted plant'].ko, '화분');
+  assert.equal(words.toilet.it, 'water');
+  assert.equal(words.kite.ja, '凧（たこ）');
+});
+
 test('self-hosted model has all weight bytes (no third-party model request needed)', () => {
   const model = JSON.parse(readFileSync(new URL('../public/model/model.json', import.meta.url)));
   const sizes = { float32: 4, int32: 4, bool: 1, complex64: 8, float16: 2, uint8: 1, uint16: 2 };

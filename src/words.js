@@ -9,21 +9,22 @@ export const languages = [
 ];
 
 // COCO-SSD's complete 80-class vocabulary. Order: Japanese, Korean,
-// simplified Chinese, French, Spanish, German, Italian. English is the key.
+// simplified Chinese, French, Spanish, German, Italian. The first column
+// is the detector label; an optional last column overrides the English word.
 const rows = [
   ['person', '人', '사람', '人', 'personne', 'persona', 'Person', 'persona'],
   ['bicycle', '自転車', '자전거', '自行车', 'vélo', 'bicicleta', 'Fahrrad', 'bicicletta'],
   ['car', '車', '자동차', '汽车', 'voiture', 'coche', 'Auto', 'automobile'],
   ['motorcycle', 'バイク', '오토바이', '摩托车', 'moto', 'motocicleta', 'Motorrad', 'motocicletta'],
-  ['airplane', '飛行機', '비행기', '飞机', 'avion', 'avión', 'Flugzeug', 'aeroplano'],
+  ['airplane', '飛行機', '비행기', '飞机', 'avion', 'avión', 'Flugzeug', 'aereo'],
   ['bus', 'バス', '버스', '公共汽车', 'bus', 'autobús', 'Bus', 'autobus'],
   ['train', '電車', '기차', '火车', 'train', 'tren', 'Zug', 'treno'],
   ['truck', 'トラック', '트럭', '卡车', 'camion', 'camión', 'Lastwagen', 'camion'],
   ['boat', '船', '배', '船', 'bateau', 'barco', 'Boot', 'barca'],
   ['traffic light', '信号機', '신호등', '红绿灯', 'feu de circulation', 'semáforo', 'Ampel', 'semaforo'],
-  ['fire hydrant', '消火栓', '소화전', '消防栓', 'borne incendie', 'boca de incendios', 'Hydrant', 'idrante'],
-  ['stop sign', '止まれの標識', '정지 표지판', '停车标志', 'panneau stop', 'señal de stop', 'Stoppschild', 'segnale di stop'],
-  ['parking meter', '駐車メーター', '주차 요금기', '停车计时器', 'parcmètre', 'parquímetro', 'Parkuhr', 'parchimetro'],
+  ['fire hydrant', '消火栓', '소화전', '消防栓', 'poteau d’incendie', 'hidrante', 'Hydrant', 'idrante'],
+  ['stop sign', '止まれの標識', '정지 표지판', '停车让行标志', 'panneau stop', 'señal de stop', 'Stoppschild', 'segnale di stop'],
+  ['parking meter', '駐車メーター', '주차 미터기', '停车计时器', 'parcmètre', 'parquímetro', 'Parkuhr', 'parchimetro'],
   ['bench', 'ベンチ', '벤치', '长椅', 'banc', 'banco', 'Sitzbank', 'panchina'],
   ['bird', '鳥', '새', '鸟', 'oiseau', 'pájaro', 'Vogel', 'uccello'],
   ['cat', 'ねこ', '고양이', '猫', 'chat', 'gato', 'Katze', 'gatto'],
@@ -41,10 +42,10 @@ const rows = [
   ['tie', 'ネクタイ', '넥타이', '领带', 'cravate', 'corbata', 'Krawatte', 'cravatta'],
   ['suitcase', 'スーツケース', '여행 가방', '行李箱', 'valise', 'maleta', 'Koffer', 'valigia'],
   ['frisbee', 'フリスビー', '프리스비', '飞盘', 'frisbee', 'disco volador', 'Frisbee', 'frisbee'],
-  ['skis', 'スキー板', '스키', '滑雪板', 'skis', 'esquís', 'Ski', 'sci'],
-  ['snowboard', 'スノーボード', '스노보드', '单板滑雪板', 'snowboard', 'tabla de snowboard', 'Snowboard', 'snowboard'],
-  ['sports ball', 'ボール', '공', '球', 'ballon', 'pelota', 'Ball', 'palla'],
-  ['kite', 'たこ', '연', '风筝', 'cerf-volant', 'cometa', 'Drachen', 'aquilone'],
+  ['skis', 'スキー板', '스키', '滑雪板', 'skis', 'esquís', 'Skier', 'sci'],
+  ['snowboard', 'スノーボード', '스노보드', '滑雪单板', 'snowboard', 'tabla de snowboard', 'Snowboard', 'snowboard'],
+  ['sports ball', 'ボール', '공', '球', 'ballon', 'pelota', 'Ball', 'palla', 'ball'],
+  ['kite', '凧（たこ）', '연', '风筝', 'cerf-volant', 'cometa', 'Drachen', 'aquilone'],
   ['baseball bat', '野球のバット', '야구 방망이', '棒球棒', 'batte de baseball', 'bate de béisbol', 'Baseballschläger', 'mazza da baseball'],
   ['baseball glove', '野球のグローブ', '야구 글러브', '棒球手套', 'gant de baseball', 'guante de béisbol', 'Baseballhandschuh', 'guantone da baseball'],
   ['skateboard', 'スケートボード', '스케이트보드', '滑板', 'skateboard', 'monopatín', 'Skateboard', 'skateboard'],
@@ -64,19 +65,19 @@ const rows = [
   ['broccoli', 'ブロッコリー', '브로콜리', '西兰花', 'brocoli', 'brócoli', 'Brokkoli', 'broccolo'],
   ['carrot', 'にんじん', '당근', '胡萝卜', 'carotte', 'zanahoria', 'Karotte', 'carota'],
   ['hot dog', 'ホットドッグ', '핫도그', '热狗', 'hot-dog', 'perrito caliente', 'Hotdog', 'hot dog'],
-  ['pizza', 'ピザ', '피자', '比萨', 'pizza', 'pizza', 'Pizza', 'pizza'],
-  ['donut', 'ドーナツ', '도넛', '甜甜圈', 'beignet', 'dónut', 'Donut', 'ciambella'],
+  ['pizza', 'ピザ', '피자', '披萨', 'pizza', 'pizza', 'Pizza', 'pizza'],
+  ['donut', 'ドーナツ', '도넛', '甜甜圈', 'donut', 'dónut', 'Donut', 'ciambella fritta'],
   ['cake', 'ケーキ', '케이크', '蛋糕', 'gâteau', 'pastel', 'Kuchen', 'torta'],
   ['chair', 'いす', '의자', '椅子', 'chaise', 'silla', 'Stuhl', 'sedia'],
   ['couch', 'ソファ', '소파', '沙发', 'canapé', 'sofá', 'Sofa', 'divano'],
   ['potted plant', '鉢植え', '화분', '盆栽', 'plante en pot', 'planta en maceta', 'Topfpflanze', 'pianta in vaso'],
   ['bed', 'ベッド', '침대', '床', 'lit', 'cama', 'Bett', 'letto'],
   ['dining table', '食卓', '식탁', '餐桌', 'table à manger', 'mesa de comedor', 'Esstisch', 'tavolo da pranzo'],
-  ['toilet', 'トイレ', '변기', '马桶', 'toilettes', 'inodoro', 'Toilette', 'gabinetto'],
-  ['tv', 'テレビ', '텔레비전', '电视', 'télévision', 'televisor', 'Fernseher', 'televisore'],
+  ['toilet', 'トイレ', '변기', '马桶', 'cuvette des toilettes', 'inodoro', 'Toilette', 'water'],
+  ['tv', 'テレビ', '텔레비전', '电视', 'télévision', 'televisor', 'Fernseher', 'televisore', 'TV'],
   ['laptop', 'ノートパソコン', '노트북', '笔记本电脑', 'ordinateur portable', 'ordenador portátil', 'Laptop', 'computer portatile'],
   ['mouse', 'マウス', '마우스', '鼠标', 'souris', 'ratón', 'Maus', 'mouse'],
-  ['remote', 'リモコン', '리모컨', '遥控器', 'télécommande', 'mando a distancia', 'Fernbedienung', 'telecomando'],
+  ['remote', 'リモコン', '리모컨', '遥控器', 'télécommande', 'mando a distancia', 'Fernbedienung', 'telecomando', 'remote control'],
   ['keyboard', 'キーボード', '키보드', '键盘', 'clavier', 'teclado', 'Tastatur', 'tastiera'],
   ['cell phone', '携帯電話', '휴대전화', '手机', 'téléphone portable', 'teléfono móvil', 'Handy', 'cellulare'],
   ['microwave', '電子レンジ', '전자레인지', '微波炉', 'micro-ondes', 'microondas', 'Mikrowelle', 'forno a microonde'],
@@ -89,12 +90,12 @@ const rows = [
   ['vase', '花びん', '꽃병', '花瓶', 'vase', 'jarrón', 'Vase', 'vaso'],
   ['scissors', 'はさみ', '가위', '剪刀', 'ciseaux', 'tijeras', 'Schere', 'forbici'],
   ['teddy bear', 'くまのぬいぐるみ', '곰 인형', '泰迪熊', 'ours en peluche', 'oso de peluche', 'Teddybär', 'orsacchiotto'],
-  ['hair drier', 'ドライヤー', '헤어드라이어', '吹风机', 'sèche-cheveux', 'secador de pelo', 'Haartrockner', 'asciugacapelli'],
+  ['hair drier', 'ドライヤー', '헤어드라이어', '吹风机', 'sèche-cheveux', 'secador de pelo', 'Haartrockner', 'asciugacapelli', 'hair dryer'],
   ['toothbrush', '歯ブラシ', '칫솔', '牙刷', 'brosse à dents', 'cepillo de dientes', 'Zahnbürste', 'spazzolino da denti'],
 ];
 
-export const words = Object.fromEntries(rows.map(([en, ja, ko, zh, fr, es, de, it]) =>
-  [en, { en, ja, ko, zh, fr, es, de, it }]));
+export const words = Object.fromEntries(rows.map(([label, ja, ko, zh, fr, es, de, it, en = label]) =>
+  [label, { en, ja, ko, zh, fr, es, de, it }]));
 
 export function chooseObjects(predictions) {
   const unique = new Map();
