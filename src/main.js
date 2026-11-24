@@ -1,5 +1,6 @@
 import './style.css';
 import { languages, words, chooseObjects } from './words.js';
+import { pickVoice } from './voice.js';
 
 const icons = {
   camera: '<rect x="3" y="6" width="18" height="15" rx="3"/><path d="m8 6 2-3h4l2 3"/><circle cx="12" cy="13" r="4"/>',
@@ -91,6 +92,8 @@ const $ = (id) => document.getElementById(id);
 function notice(message = '') { $('notice').textContent = message; $('notice').hidden = !message; }
 let toastTimer;
 function toast(message) {
+  // An open dialog sits in the top layer, so show the message inside it.
+  (document.querySelector('dialog[open]') || document.body).append($('toast'));
   $('toast').textContent = message; $('toast').hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 4000);
 }
@@ -270,16 +273,20 @@ async function inspectPhoto(url, demo = false) {
     $('start-camera').innerHTML = `${icon('camera')}<span>カメラで写す</span>`;
   } catch (error) { if (token === session) showFailure(error); }
 }
+let utterance = null;
 function speak(word, langId) {
   const lang = languages.find((l) => l.id === langId);
   if (!('speechSynthesis' in window)) { toast('このブラウザでは音声を使えません。'); return; }
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) { toast('音声の準備をしています。少し待って、もう一度押してください。'); return; }
   // Only use a local voice. Never send the learned word to a remote voice service.
-  const voice = speechSynthesis.getVoices().find((v) => v.localService && v.lang.split(/[-_]/)[0] === langId);
+  const voice = pickVoice(voices, lang);
   if (!voice) { toast(`${lang.label}の音声がありません。iPadの設定で読み上げる音声を追加してください。`); return; }
-  speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(words[word][langId]);
-  utterance.lang = lang.voice; utterance.voice = voice; utterance.rate = 0.8;
-  utterance.onerror = () => toast('音声を再生できませんでした。もう一度おためしください。');
+  if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  // Keep a reference so Safari does not drop the utterance before it ends.
+  utterance = new SpeechSynthesisUtterance(words[word][langId]);
+  utterance.lang = voice.lang; utterance.voice = voice; utterance.rate = 0.8;
+  utterance.onerror = (event) => { if (!['interrupted', 'canceled'].includes(event.error)) toast('音声を再生できませんでした。もう一度おためしください。'); };
   speechSynthesis.speak(utterance);
 }
 function renderNotebook() {
@@ -332,6 +339,7 @@ $('open-notebook').onclick = () => { renderNotebook(); $('notebook-dialog').show
 $('open-help').onclick = () => $('help-dialog').showModal();
 document.querySelectorAll('.close-dialog').forEach((button) => { button.onclick = () => button.closest('dialog').close(); });
 document.querySelectorAll('dialog').forEach((dialog) => {
+  dialog.addEventListener('close', () => { if ($('toast').parentElement === dialog) { $('toast').hidden = true; document.body.append($('toast')); } });
   dialog.addEventListener('click', (event) => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
 });
 document.addEventListener('visibilitychange', () => {
