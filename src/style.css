@@ -196,7 +196,7 @@ dialog::backdrop { background: #182e2673; backdrop-filter: blur(4px); }
   dialog { padding: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
-.brand small { font-size: 12px; }
+.brand small { font-size: 14px; }
 .notebook-button { font-size: 16px; }
 .count { font-size: 13px; }
 .eyebrow { font-size: 14px; }
@@ -233,3 +233,4 @@ footer > span, footer .text-button { font-size: 14px; }
 .help-content h3 { font-size: 18px; }
 .help-content .supported-objects, .help-content .photo-credit { font-size: 14px; }
 .toast { font-size: 16px; }
+.dialog-header .eyebrow { font-size: 14px; }
