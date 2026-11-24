@@ -196,3 +196,40 @@ dialog::backdrop { background: #182e2673; backdrop-filter: blur(4px); }
   dialog { padding: 22px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.brand small { font-size: 12px; }
+.notebook-button { font-size: 16px; }
+.count { font-size: 13px; }
+.eyebrow { font-size: 14px; }
+.intro-copy { font-size: 16px; }
+.language-picker > span { font-size: 14px; }
+select { min-height: 44px; font-size: 16px; }
+.stage-label, .stage-stop { font-size: 14px; }
+.welcome > span { font-size: 14px; }
+.stage-hint { font-size: 16px; line-height: 1.5; }
+.camera-caption > span { font-size: 14px; }
+.camera-actions .button { font-size: 16px; }
+.text-button { font-size: 16px; }
+.panel-heading h2 { font-size: 16px; }
+.result-badge { font-size: 14px; }
+.empty-result h3 { font-size: 22px; }
+.empty-result p { font-size: 16px; }
+.empty-result .tip-label { font-size: 14px; }
+.panel-bottom { font-size: 14px; }
+.word-result .eyebrow { font-size: 14px; }
+.recognition-note { font-size: 14px; }
+.other-objects > p { font-size: 14px; }
+.object-choice { font-size: 16px; }
+.how-it-works p { font-size: 16px; }
+.how-it-works small { font-size: 14px; }
+footer > span, footer .text-button { font-size: 14px; }
+.loading strong { font-size: 16px; }
+.loading > span:last-child { font-size: 14px; }
+.notice { font-size: 16px; }
+.dialog-intro { font-size: 16px; }
+.dialog-footnote { font-size: 14px; }
+.notebook-empty p { font-size: 16px; }
+.saved-row small { font-size: 14px; }
+.help-content { font-size: 16px; }
+.help-content h3 { font-size: 18px; }
+.help-content .supported-objects, .help-content .photo-credit { font-size: 14px; }
+.toast { font-size: 16px; }
