@@ -1,6 +1,7 @@
 import './style.css';
 import { languages, words, chooseObjects } from './words.js';
 import { pickVoice } from './voice.js';
+import { hasCameraFrame, playCamera } from './camera.js';
 
 const icons = {
   camera: '<rect x="3" y="6" width="18" height="15" rx="3"/><path d="m8 6 2-3h4l2 3"/><circle cx="12" cy="13" r="4"/>',
@@ -26,6 +27,7 @@ saved = Array.isArray(saved) ? saved.filter((s) => s && words[s.word] && languag
 let selected = null;
 let predictions = [];
 let stream = null;
+let cameraOpening = null;
 let timer = null;
 let session = 0;
 let mode = 'idle';
@@ -91,7 +93,7 @@ document.querySelector('#app').innerHTML = `
     <footer><span>ことばレンズ</span><button id="open-help" class="text-button">使い方と、見つけられるもの</button></footer>
   </main>
   <dialog id="notebook-dialog" aria-labelledby="notebook-title"><div class="dialog-header"><div><p class="eyebrow">あなただけの小さな辞書</p><h2 id="notebook-title">ことば帳</h2></div><button class="icon-button close-dialog" aria-label="ことば帳を閉じる">${icon('close')}</button></div><p class="dialog-intro">このiPadに、ことばだけを残します。写真は残りません。</p><div id="notebook-list"></div><p class="dialog-footnote">同じブラウザで開くと、また見られます。<br>Safariの履歴やWebサイトのデータを消すと、ことば帳も消えます。</p></dialog>
-  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-header"><h2 id="help-title">ことばを見つけよう</h2><button class="icon-button close-dialog" aria-label="使い方を閉じる">${icon('close')}</button></div><div class="help-content"><h3>はじめかた</h3><p>学ぶことばをえらんで「カメラをはじめる」を押します。カメラの使用を聞かれたら「許可」を押してください。許可をあとで変えるときは、Safariでこのページのカメラの設定を開いてください。身近なものを大きく写すと、名前が出てきます。</p><p>「写真をえらぶ」から、iPadにある写真でも調べられます。「ねこの写真で試す」なら、カメラも自分の写真もいりません。</p><h3>写真は、iPadの中だけで調べます</h3><p>写真やカメラの映像を外に送ったり、残したりしません。はじめの準備には通信が必要です（約20MB）。</p><h3>いつも正しいとは限りません</h3><p>明るいところで、ものを1つ大きく写してみてください。種類が似ているものや小さなものは、まちがえたり、見つからなかったりします。文章や文字の翻訳はできません。</p><h3>発音について</h3><p>iPadに入っている音声で読みます。聞こえないときは音量を上げてください。その言語の音声がないときは、iPadの「設定」で読み上げる音声を追加すると使えます。</p><h3>見つけられる80種類</h3><p class="supported-objects">${Object.values(words).map((w) => w.ja).join('・')}</p><p class="photo-credit">おためしの写真：<a href="https://unsplash.com/photos/2F3HEGx5fC0" target="_blank" rel="noopener noreferrer">Mikhail Vasilyev / Unsplash</a></p></div></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-header"><h2 id="help-title">ことばを見つけよう</h2><button class="icon-button close-dialog" aria-label="使い方を閉じる">${icon('close')}</button></div><div class="help-content"><h3>はじめかた</h3><p>学ぶことばをえらんで「カメラをはじめる」を押します。カメラの使用を聞かれたら「許可」を押してください。身近なものを大きく写すと、名前が出てきます。</p><p>「写真をえらぶ」から、iPadにある写真でも調べられます。「ねこの写真で試す」なら、カメラも自分の写真もいりません。</p><h3>カメラを許可しなかったとき</h3><p>Safariのアドレス欄の横のメニューから「ウェブサイトの設定」を開き、「カメラ」を「許可」にします。そのあと「カメラをはじめる」を押してください。</p><h3>写真は、iPadの中だけで調べます</h3><p>写真やカメラの映像を外に送ったり、残したりしません。はじめの準備には通信が必要です（約20MB）。</p><h3>いつも正しいとは限りません</h3><p>明るいところで、ものを1つ大きく写してみてください。種類が似ているものや小さなものは、まちがえたり、見つからなかったりします。文章や文字の翻訳はできません。</p><h3>発音について</h3><p>iPadに入っている音声で読みます。聞こえないときは音量を上げてください。その言語の音声がないときは、iPadの「設定」で読み上げる音声を追加すると使えます。</p><h3>見つけられる80種類</h3><p class="supported-objects">${Object.values(words).map((w) => w.ja).join('・')}</p><p class="photo-credit">おためしの写真：<a href="https://unsplash.com/photos/2F3HEGx5fC0" target="_blank" rel="noopener noreferrer">Mikhail Vasilyev / Unsplash</a></p></div></dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 `;
 
@@ -112,6 +114,8 @@ function toast(message) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 4000);
 }
 function stopTracks() {
+  cameraOpening?.abort();
+  cameraOpening = null;
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   $('video').srcObject = null;
@@ -187,9 +191,9 @@ function renderWord() {
   }));
 }
 function drawBoxes() {
-  const media = mode === 'live' ? $('video') : $('photo');
-  const width = media.videoWidth || media.naturalWidth;
-  const height = media.videoHeight || media.naturalHeight;
+  const media = mode === 'live' ? $('video') : mode === 'frozen' ? $('frozen') : $('photo');
+  const width = media.videoWidth || media.naturalWidth || media.width;
+  const height = media.videoHeight || media.naturalHeight || media.height;
   if (!width || !height) return;
   $('boxes').setAttribute('viewBox', `0 0 ${width} ${height}`);
   $('boxes').replaceChildren(...predictions.filter((p) => p.class === selected).map((p) => {
@@ -198,22 +202,27 @@ function drawBoxes() {
     rect.setAttribute('rx', '12'); rect.setAttribute('vector-effect', 'non-scaling-stroke'); return rect;
   }));
 }
-function showPredictions(items) {
+function showStageHint(message) {
+  $('stage-hint').textContent = message;
+  $('stage-hint').hidden = false;
+}
+function showPredictions(items, preferred = selected) {
   predictions = chooseObjects(items);
-  if (!predictions.some((p) => p.class === selected)) selected = predictions[0]?.class || null;
+  selected = predictions.some((p) => p.class === preferred) ? preferred : predictions[0]?.class || null;
   if (selected) {
     renderWord(); drawBoxes();
-    $('stage-hint').textContent = '見つけたものの名前を見てみよう';
+    showStageHint('見つけたものの名前を見てみよう');
   } else {
     resetResult(mode);
-    $('stage-hint').textContent = mode === 'live' ? 'まだ名前が見つかりません' : '名前が見つかりませんでした';
+    showStageHint(mode === 'live' ? 'まだ名前が見つかりません' : '名前が見つかりませんでした');
   }
-  $('stage-hint').hidden = false;
 }
 function showFailure(error, camera = false) {
   showIdle();
   if (camera && ['NotAllowedError', 'PermissionDeniedError'].includes(error?.name)) {
     notice('カメラの使用が許可されていません。写真からでも調べられます。', true);
+  } else if (error?.message === 'camera-frame-timeout') {
+    notice('カメラの映像が届きませんでした。もう一度はじめるか、写真から調べてください。', true);
   } else if (camera && ['NotFoundError', 'NotReadableError', 'OverconstrainedError'].includes(error?.name)) {
     notice('カメラを開けませんでした。写真からでも調べられます。', true);
   } else if (error?.message === 'invalid-photo') {
@@ -227,52 +236,94 @@ async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
     showIdle(); notice('このブラウザではカメラを使えません。写真からでも調べられます。', true); return;
   }
-  let cameraReady = false;
-  let modelReady = false;
-  const updateLoading = () => {
-    if (token !== session) return;
-    $('loading-title').textContent = !cameraReady ? 'カメラの使用を「許可」してください' : 'ことばを探す準備をしています';
-    $('loading-copy').textContent = modelReady ? 'カメラが開くのを待っています' : 'はじめだけ少し時間がかかります（約20MB）';
-  };
-  updateLoading();
+  const video = $('video');
+  $('loading-title').textContent = 'カメラの使用を「許可」してください';
+  $('loading-copy').textContent = '使わないときは「やめる」を押してください';
   try {
     // Request permission within the tap, before awaiting the model import.
-    const cameraPromise = navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } } }).then((value) => {
+    const cameraPromise = navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } } }).then(async (value) => {
       if (token !== session) { value.getTracks().forEach((t) => t.stop()); return null; }
-      stream = value; cameraReady = true; updateLoading(); return value;
+      stream = value;
+      for (const track of value.getVideoTracks()) {
+        track.addEventListener('ended', () => {
+          if (token === session) {
+            showIdle(); notice('カメラが止まりました。「カメラをはじめる」をもう一度押してください。');
+          }
+        }, { once: true });
+      }
+      $('loading-title').textContent = 'カメラの映像を待っています';
+      const opening = new AbortController();
+      cameraOpening = opening;
+      video.hidden = false;
+      video.srcObject = value;
+      try {
+        await playCamera(video, opening.signal);
+      } finally {
+        if (cameraOpening === opening) cameraOpening = null;
+      }
+      if (token === session) {
+        $('loading-title').textContent = 'ことばを探す準備をしています';
+        $('loading-copy').textContent = 'はじめだけ少し時間がかかります（約20MB）';
+      }
+      return value;
     });
-    const modelPromise = detector().then((value) => { modelReady = true; updateLoading(); return value; });
-    const [camera, model] = await Promise.all([cameraPromise, modelPromise]);
+    const [camera, model] = await Promise.all([cameraPromise, detector()]);
     if (token !== session || !camera) return;
-    $('video').srcObject = camera;
-    await $('video').play();
-    if (token !== session) return;
-    mode = 'live'; $('video').hidden = false; $('stage').classList.add('has-media'); setBusy(false);
+    mode = 'live'; $('stage').classList.add('has-media'); setBusy(false);
     $('stage-label').innerHTML = '<span class="dot live-dot"></span>カメラで探しています';
     $('start-camera').innerHTML = `${icon('check')}<span>とめて見る</span>`;
     let misses = 0;
     const scan = async () => {
       if (session !== token || mode !== 'live') return;
       try {
-        const results = await model.detect($('video'), 10, 0.55);
+        if (!hasCameraFrame(video)) {
+          resetResult('loading'); showStageHint('カメラの映像を待っています');
+          timer = setTimeout(scan, 1000);
+          return;
+        }
+        const width = video.videoWidth; const height = video.videoHeight;
+        const results = await model.detect(video, 10, 0.55);
         if (session !== token || mode !== 'live') return;
-        if (chooseObjects(results).length || ++misses >= 3 || !selected) { showPredictions(results); }
-        if (chooseObjects(results).length) misses = 0;
+        if (width === video.videoWidth && height === video.videoHeight) {
+          const found = chooseObjects(results).length;
+          if (found || ++misses >= 3 || !selected) showPredictions(results);
+          if (found) misses = 0;
+        } else {
+          resetResult('loading'); showStageHint('ことばを探しています');
+        }
         timer = setTimeout(scan, 1000);
       } catch (error) { if (session === token) showFailure(error); }
     };
     scan();
   } catch (error) { if (token === session) showFailure(error, true); }
 }
-function freezeCamera() {
+async function freezeCamera() {
   const video = $('video'); const canvas = $('frozen');
+  if (!hasCameraFrame(video)) {
+    showStageHint('カメラの映像を待っています');
+    return;
+  }
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0);
-  session++; clearTimeout(timer); stopTracks(); mode = 'frozen';
+  cleanup(); mode = 'frozen';
+  const token = session;
+  const preferred = selected;
+  resetResult('loading');
+  showStageHint('写したものの名前を探しています');
   canvas.hidden = false; video.hidden = true; $('stop').hidden = true;
   $('stage-label').innerHTML = '<span class="dot"></span>とめて見ています';
   $('start-camera').innerHTML = `${icon('camera')}<span>もう一度写す</span>`;
-  if (!selected) resetResult('frozen');
+  try {
+    const model = await detector();
+    if (token !== session) return;
+    const results = await model.detect(canvas, 10, 0.55);
+    if (token === session) showPredictions(results, preferred);
+  } catch {
+    if (token === session) {
+      resetResult('frozen');
+      showStageHint('名前を調べられませんでした。「もう一度写す」を押してください');
+    }
+  }
 }
 async function inspectPhoto(url, demo = false) {
   const token = prepare('photo-loading');
@@ -362,8 +413,16 @@ document.querySelectorAll('dialog').forEach((dialog) => {
   dialog.addEventListener('close', () => { if ($('toast').parentElement === dialog) { $('toast').hidden = true; document.body.append($('toast')); } });
   dialog.addEventListener('click', (event) => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
 });
+function stopCameraOnLeave() {
+  if (mode === 'live' || mode === 'camera-loading') {
+    showIdle(); notice('カメラを止めました。もう一度使うときは「カメラをはじめる」を押してください。');
+  }
+}
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && (stream || mode === 'camera-loading')) { showIdle(); notice('カメラを止めました。使うときは、もう一度はじめてください。'); }
+  if (document.hidden) stopCameraOnLeave();
 });
-window.addEventListener('pagehide', cleanup);
+window.addEventListener('pagehide', (event) => {
+  stopCameraOnLeave();
+  if (!event.persisted) cleanup();
+});
 renderNotebook();

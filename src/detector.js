@@ -25,13 +25,13 @@ export function loadDetector() {
           const width = media.videoWidth || media.naturalWidth || media.width;
           const height = media.videoHeight || media.naturalHeight || media.height;
           const scale = Math.min(1, 960 / Math.max(width, height));
-          canvas.width = Math.max(1, Math.round(width * scale));
-          canvas.height = Math.max(1, Math.round(height * scale));
-          context.drawImage(media, 0, 0, canvas.width, canvas.height);
+          const sampleWidth = canvas.width = Math.max(1, Math.round(width * scale));
+          const sampleHeight = canvas.height = Math.max(1, Math.round(height * scale));
+          context.drawImage(media, 0, 0, sampleWidth, sampleHeight);
           const boxes = await model.detect(canvas, maxBoxes, minScore);
           return boxes.map((box) => ({
             ...box,
-            bbox: box.bbox.map((value, i) => value * (i % 2 === 0 ? width / canvas.width : height / canvas.height)),
+            bbox: box.bbox.map((value, i) => value * (i % 2 === 0 ? width / sampleWidth : height / sampleHeight)),
           }));
         },
       };
