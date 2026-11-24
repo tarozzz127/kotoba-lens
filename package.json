@@ -1,0 +1,32 @@
+{
+  "name": "kotoba-lens",
+  "version": "1.0.0",
+  "description": "ことばレンズ: カメラに写したものの名前を習いたい言語で表示する語学学習アプリ",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tarozzz127/kotoba-lens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "engines": { "node": ">=22.12.0" },
+  "bugs": {
+    "url": "https://github.com/tarozzz127/kotoba-lens/issues"
+  },
+  "homepage": "https://github.com/tarozzz127/kotoba-lens#readme",
+  "dependencies": {
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.4"
+  }
+}
