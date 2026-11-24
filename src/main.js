@@ -31,6 +31,13 @@ let session = 0;
 let mode = 'idle';
 let imageUrl = null;
 let detectorPromise;
+const emptyMessages = {
+  idle: ['どんなことばに<br>出会えるかな。', 'カメラや写真で調べると、<br>ここに名前が出ます。'],
+  loading: ['名前を探しています', '少しお待ちください。'],
+  live: ['まだ名前が見つかりません', 'カメラの向きや距離を変えてみてね。'],
+  photo: ['名前が見つかりませんでした', '「写真をえらぶ」から、別の写真で試してみてね。'],
+  frozen: ['まだ名前が見つかりません', '「もう一度写す」から、向きや距離を変えてみてね。'],
+};
 
 document.querySelector('#app').innerHTML = `
   <header class="site-header">
@@ -39,7 +46,7 @@ document.querySelector('#app').innerHTML = `
   </header>
   <main>
     <section class="intro" aria-labelledby="page-title">
-      <div><p class="eyebrow">いつもの景色が、学びに変わる</p><h1 id="page-title">目の前の「これ」、<br class="portrait-break">なんて言う？</h1><p class="intro-copy">カメラを向けて、ことばを見つけよう。</p></div>
+      <div><p class="eyebrow">いつもの景色が、学びに変わる</p><h1 id="page-title">目の前の「これ」、<br class="portrait-break">なんて言う？</h1><p class="intro-copy">カメラや写真で、身近なものの名前を調べよう。</p></div>
       <label class="language-picker" for="language"><span>学ぶことば</span><select id="language">${languages.map((l) => `<option value="${l.id}" ${l.id === language.id ? 'selected' : ''}>${l.label} / ${l.native}</option>`).join('')}</select></label>
     </section>
     <div class="workspace">
@@ -68,14 +75,14 @@ document.querySelector('#app').innerHTML = `
           <div id="loading" class="loading" role="status" hidden><span class="spinner"></span><strong id="loading-title">ことばを探す準備をしています</strong><span id="loading-copy">はじめだけ少し時間がかかります</span></div>
           <p id="stage-hint" class="stage-hint" hidden></p>
         </div>
+        <p id="notice" class="notice" role="status" hidden></p>
         <div class="camera-actions"><button id="start-camera" class="button primary">${icon('camera')}<span>カメラをはじめる</span></button><button id="choose-photo" class="button secondary">${icon('photo')}<span>写真をえらぶ</span></button></div>
         <input id="photo-input" type="file" accept="image/*" hidden>
-        <div class="camera-caption"><span>${icon('shield')}写真は外に送りません</span><button id="try-demo" class="text-button">写真でためす ${icon('arrow')}</button></div>
-        <p id="notice" class="notice" role="status" hidden></p>
+        <div class="camera-caption"><span>${icon('shield')}写真は外に送りません</span><button id="try-demo" class="button demo-button">ねこの写真で試す ${icon('arrow')}</button></div>
       </section>
       <aside class="word-panel" aria-label="見つけたことば">
         <div class="panel-heading"><span class="mini-mark"></span><h2>見つけたことば</h2><span id="result-badge" class="result-badge" hidden>見つけた！</span></div>
-        <div id="empty-result" class="empty-result"><span class="empty-orbit">Aa<span>あ</span></span><h3>どんなことばに<br>出会えるかな。</h3><p>ものを写すと、ここに<br>名前が出てきます。</p><div class="small-rule"></div><p class="tip-label">見つけるコツ</p><p>明るいところで、ものを1つ<br>大きく写してみてね。</p></div>
+        <div id="empty-result" class="empty-result" data-state="idle"><span class="empty-orbit" aria-hidden="true">Aa<span>あ</span></span><div role="status"><h3 id="empty-title">${emptyMessages.idle[0]}</h3><p id="empty-copy">${emptyMessages.idle[1]}</p></div><div class="small-rule"></div><p class="tip-label">見つけるコツ</p><p>明るいところで、ものを1つ<br>大きく写してみてね。</p></div>
         <div id="word-result" class="word-result" hidden><p id="result-language" class="eyebrow"></p><h3 id="translated-word" dir="auto"></h3><p id="japanese-word" class="japanese-word"></p><button id="speak" class="button listen">${icon('sound')}発音を聞く</button><button id="save" class="button save">${icon('plus')}ことば帳に入れる</button><div id="other-objects" class="other-objects" hidden><p>ほかに見つけたもの</p><div id="object-choices"></div></div><p id="recognition-note" class="recognition-note">名前がちがうときは、向きや距離を<br>変えてもう一度写してみてね。</p></div>
         <div class="panel-bottom">小さな発見を、ひとつずつ。</div>
       </aside>
@@ -84,12 +91,19 @@ document.querySelector('#app').innerHTML = `
     <footer><span>ことばレンズ</span><button id="open-help" class="text-button">使い方と、見つけられるもの</button></footer>
   </main>
   <dialog id="notebook-dialog" aria-labelledby="notebook-title"><div class="dialog-header"><div><p class="eyebrow">あなただけの小さな辞書</p><h2 id="notebook-title">ことば帳</h2></div><button class="icon-button close-dialog" aria-label="ことば帳を閉じる">${icon('close')}</button></div><p class="dialog-intro">このiPadに、ことばだけを残します。写真は残りません。</p><div id="notebook-list"></div><p class="dialog-footnote">同じブラウザで開くと、また見られます。<br>Safariの履歴やWebサイトのデータを消すと、ことば帳も消えます。</p></dialog>
-  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-header"><h2 id="help-title">ことばを見つけよう</h2><button class="icon-button close-dialog" aria-label="使い方を閉じる">${icon('close')}</button></div><div class="help-content"><h3>はじめかた</h3><p>学ぶことばをえらんで「カメラをはじめる」を押します。カメラの使用を聞かれたら「許可」を押してください。身近なものを大きく写すと、名前が出てきます。</p><p>カメラが使えないときは「写真をえらぶ」でも調べられます。「写真でためす」なら、用意したねこの写真でおためしできます。</p><h3>写真は、iPadの中だけで調べます</h3><p>写真やカメラの映像を外に送ったり、残したりしません。はじめの準備には通信が必要です（約20MB）。</p><h3>いつも正しいとは限りません</h3><p>明るいところで、ものを1つ大きく写してみてください。種類が似ているものや小さなものは、まちがえたり、見つからなかったりします。文章や文字の翻訳はできません。</p><h3>発音について</h3><p>iPadに入っている音声で読みます。聞こえないときは音量を上げてください。その言語の音声がないときは、iPadの「設定」で読み上げる音声を追加すると使えます。</p><h3>見つけられる80種類</h3><p class="supported-objects">${Object.values(words).map((w) => w.ja).join('・')}</p><p class="photo-credit">おためしの写真：<a href="https://unsplash.com/photos/2F3HEGx5fC0" target="_blank" rel="noopener noreferrer">Mikhail Vasilyev / Unsplash</a></p></div></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-header"><h2 id="help-title">ことばを見つけよう</h2><button class="icon-button close-dialog" aria-label="使い方を閉じる">${icon('close')}</button></div><div class="help-content"><h3>はじめかた</h3><p>学ぶことばをえらんで「カメラをはじめる」を押します。カメラの使用を聞かれたら「許可」を押してください。許可をあとで変えるときは、Safariでこのページのカメラの設定を開いてください。身近なものを大きく写すと、名前が出てきます。</p><p>「写真をえらぶ」から、iPadにある写真でも調べられます。「ねこの写真で試す」なら、カメラも自分の写真もいりません。</p><h3>写真は、iPadの中だけで調べます</h3><p>写真やカメラの映像を外に送ったり、残したりしません。はじめの準備には通信が必要です（約20MB）。</p><h3>いつも正しいとは限りません</h3><p>明るいところで、ものを1つ大きく写してみてください。種類が似ているものや小さなものは、まちがえたり、見つからなかったりします。文章や文字の翻訳はできません。</p><h3>発音について</h3><p>iPadに入っている音声で読みます。聞こえないときは音量を上げてください。その言語の音声がないときは、iPadの「設定」で読み上げる音声を追加すると使えます。</p><h3>見つけられる80種類</h3><p class="supported-objects">${Object.values(words).map((w) => w.ja).join('・')}</p><p class="photo-credit">おためしの写真：<a href="https://unsplash.com/photos/2F3HEGx5fC0" target="_blank" rel="noopener noreferrer">Mikhail Vasilyev / Unsplash</a></p></div></dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 `;
 
 const $ = (id) => document.getElementById(id);
-function notice(message = '') { $('notice').textContent = message; $('notice').hidden = !message; }
+function notice(message = '', suggestPhoto = false) {
+  $('notice').textContent = message;
+  $('notice').hidden = !message;
+  $('start-camera').classList.toggle('primary', !suggestPhoto);
+  $('start-camera').classList.toggle('secondary', suggestPhoto);
+  $('choose-photo').classList.toggle('primary', suggestPhoto);
+  $('choose-photo').classList.toggle('secondary', !suggestPhoto);
+}
 let toastTimer;
 function toast(message) {
   // An open dialog sits in the top layer, so show the message inside it.
@@ -106,10 +120,15 @@ function cleanup() {
   session++; clearTimeout(timer); stopTracks();
   if (imageUrl) { URL.revokeObjectURL(imageUrl); imageUrl = null; }
 }
-function resetResult() {
+function resetResult(state = 'idle') {
   selected = null; predictions = [];
   $('empty-result').hidden = false; $('word-result').hidden = true; $('result-badge').hidden = true;
   $('boxes').replaceChildren();
+  if ($('empty-result').dataset.state !== state) {
+    const [title, copy] = emptyMessages[state];
+    $('empty-title').innerHTML = title; $('empty-copy').innerHTML = copy;
+    $('empty-result').dataset.state = state;
+  }
 }
 function setBusy(busy) {
   $('loading').hidden = !busy;
@@ -119,7 +138,7 @@ function setBusy(busy) {
   $('stop').hidden = !busy && mode !== 'live';
 }
 function prepare(nextMode) {
-  cleanup(); mode = nextMode; resetResult(); notice();
+  cleanup(); mode = nextMode; resetResult('loading'); notice();
   $('welcome').hidden = true; $('video').hidden = true; $('photo').hidden = true; $('frozen').hidden = true;
   $('stage-hint').hidden = true;
   $('stage').classList.remove('has-media');
@@ -184,19 +203,19 @@ function showPredictions(items) {
   if (!predictions.some((p) => p.class === selected)) selected = predictions[0]?.class || null;
   if (selected) {
     renderWord(); drawBoxes();
-    $('stage-hint').textContent = '見つけた！ 右のことばを見てみよう';
+    $('stage-hint').textContent = '見つけたものの名前を見てみよう';
   } else {
-    resetResult();
-    $('stage-hint').textContent = 'まだ見つかりません。明るいところで、大きく写してね';
+    resetResult(mode);
+    $('stage-hint').textContent = mode === 'live' ? 'まだ名前が見つかりません' : '名前が見つかりませんでした';
   }
   $('stage-hint').hidden = false;
 }
 function showFailure(error, camera = false) {
   showIdle();
-  if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') {
-    notice('カメラを使うには許可が必要です。Safariのカメラの設定を「許可」にして、もう一度押してください。「写真をえらぶ」でも使えます。');
+  if (camera && ['NotAllowedError', 'PermissionDeniedError'].includes(error?.name)) {
+    notice('カメラの使用が許可されていません。写真からでも調べられます。', true);
   } else if (camera && ['NotFoundError', 'NotReadableError', 'OverconstrainedError'].includes(error?.name)) {
-    notice('カメラを開けませんでした。ほかでカメラを使っていたら閉じて、もう一度おためしください。「写真をえらぶ」でも使えます。');
+    notice('カメラを開けませんでした。写真からでも調べられます。', true);
   } else if (error?.message === 'invalid-photo') {
     notice('この写真は開けませんでした。別の写真をえらんでください。');
   } else {
@@ -206,7 +225,7 @@ function showFailure(error, camera = false) {
 async function startCamera() {
   const token = prepare('camera-loading');
   if (!navigator.mediaDevices?.getUserMedia) {
-    showIdle(); notice('このブラウザではカメラを開けません。「写真をえらぶ」をおためしください。'); return;
+    showIdle(); notice('このブラウザではカメラを使えません。写真からでも調べられます。', true); return;
   }
   let cameraReady = false;
   let modelReady = false;
@@ -253,6 +272,7 @@ function freezeCamera() {
   canvas.hidden = false; video.hidden = true; $('stop').hidden = true;
   $('stage-label').innerHTML = '<span class="dot"></span>とめて見ています';
   $('start-camera').innerHTML = `${icon('camera')}<span>もう一度写す</span>`;
+  if (!selected) resetResult('frozen');
 }
 async function inspectPhoto(url, demo = false) {
   const token = prepare('photo-loading');
