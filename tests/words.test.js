@@ -37,9 +37,9 @@ test('recognized labels can display a different English word without changing th
     ['ball', 'TV', 'remote control', 'hair dryer', 'cell phone']);
 });
 
-test('translations name the pictured object rather than an ambiguous category', () => {
+test('translations use natural names for the pictured objects', () => {
   assert.equal(words['stop sign'].zh, '停车让行标志');
-  assert.equal(words['potted plant'].ko, '화분에 심은 식물');
+  assert.equal(words['potted plant'].ko, '화분');
   assert.equal(words.toilet.it, 'water');
   assert.equal(words.kite.ja, '凧（たこ）');
 });

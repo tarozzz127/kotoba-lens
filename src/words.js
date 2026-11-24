@@ -70,7 +70,7 @@ const rows = [
   ['cake', 'ケーキ', '케이크', '蛋糕', 'gâteau', 'pastel', 'Kuchen', 'torta'],
   ['chair', 'いす', '의자', '椅子', 'chaise', 'silla', 'Stuhl', 'sedia'],
   ['couch', 'ソファ', '소파', '沙发', 'canapé', 'sofá', 'Sofa', 'divano'],
-  ['potted plant', '鉢植え', '화분에 심은 식물', '盆栽', 'plante en pot', 'planta en maceta', 'Topfpflanze', 'pianta in vaso'],
+  ['potted plant', '鉢植え', '화분', '盆栽', 'plante en pot', 'planta en maceta', 'Topfpflanze', 'pianta in vaso'],
   ['bed', 'ベッド', '침대', '床', 'lit', 'cama', 'Bett', 'letto'],
   ['dining table', '食卓', '식탁', '餐桌', 'table à manger', 'mesa de comedor', 'Esstisch', 'tavolo da pranzo'],
   ['toilet', 'トイレ', '변기', '马桶', 'cuvette des toilettes', 'inodoro', 'Toilette', 'water'],
