@@ -221,7 +221,7 @@ function showPredictions(items, preferred = selected) {
 function showFailure(error, camera = false) {
   showIdle();
   if (camera && ['NotAllowedError', 'PermissionDeniedError'].includes(error?.name)) {
-    notice('カメラを使えませんでした。「写真をえらぶ」から調べられます。', true);
+    notice('カメラを使うには「許可」が必要です。「写真をえらぶ」なら、すぐに調べられます。', true);
   } else if (error?.message === 'camera-frame-timeout') {
     notice('カメラが開きませんでした。「写真をえらぶ」で調べるか、「カメラをはじめる」をもう一度押してください。', true);
   } else if (camera && ['NotFoundError', 'NotReadableError', 'OverconstrainedError'].includes(error?.name)) {
